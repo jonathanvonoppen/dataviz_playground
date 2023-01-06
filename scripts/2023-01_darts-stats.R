@@ -14,10 +14,11 @@ pacman::p_load(tidyverse,  # for data wrangling and visualisation
 
 # Set colours and plot visuals
 
-# define colours
+# define segment colours
 red <- "#D62213"
   green <- "#42862D"
     beige <- "#F5DFB1"
+      black <- "#191B1D"
 
 # define empty space radius
 empty_space_radius_inner <- 0.6
