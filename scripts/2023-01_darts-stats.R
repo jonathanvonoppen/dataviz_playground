@@ -173,6 +173,10 @@ df_rings <- df_niners_plot |>
 (niners_plot <- ggplot() +
    
   # darts board design: coloured segments
+   # green ring for base
+   geom_rect(aes(xmin = 0, xmax = length(unique(df_niners_plot$year_rank)) + 1,
+                 ymin = empty_space_radius_inner, ymax = empty_space_radius_outer + 4),
+             fill = green) +
    # inner beige ring
    geom_rect(aes(xmin = 0, xmax = length(unique(df_niners_plot$year_rank)) + 1,
                  ymin = empty_space_radius_outer, ymax = empty_space_radius_outer + 1),
@@ -193,6 +197,13 @@ df_rings <- df_niners_plot |>
                  fill = fill_col)) + scale_fill_identity(guide = "none") +
   # set up new fill scale for points 
    ggnewscale::new_scale_fill() +
+   
+  # start-of-time line
+   geom_segment(aes(x = 0.5, xend = 0.5,
+                    y = empty_space_radius_outer, yend = empty_space_radius_outer + 4.5),
+                colour = "grey15",
+                lineend = "round",
+                linewidth = 2) +
    
   # 9-darter lines
    geom_segment(data = df_niners_plot,
@@ -220,10 +231,10 @@ df_rings <- df_niners_plot |>
    scale_colour_identity(guide = "none") +
    scale_fill_identity(guide = "none") +
    
-  # add two inner rectangles which will become the inner empty space
-   geom_rect(aes(xmin = 0, xmax = length(unique(df_niners_plot$year_rank)) + 1,
-                 ymin = empty_space_radius_inner, ymax = empty_space_radius_outer),
-             fill = green) +
+  # add two inner rectangles which will become the single bull / bulls eye
+       # geom_rect(aes(xmin = 0, xmax = length(unique(df_niners_plot$year_rank)) + 1,
+       #               ymin = empty_space_radius_inner, ymax = empty_space_radius_outer),
+       #           fill = green) +
    geom_rect(aes(xmin = 0, xmax = length(unique(df_niners_plot$year_rank)) + 1,
                  ymin = 0, ymax = empty_space_radius_inner),
              fill = red) +
