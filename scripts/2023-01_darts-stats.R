@@ -8,12 +8,8 @@
 #' 
 #' make colour scheme
 #'  > create tighter col gradient for players w/ < 2 9ers
-#' 
-#' close gap
-#'  > adjust rect widths
-#' 
-#' adjust point sizes
-#'  > evt look up points left for opponent
+#'  
+#' adjust ring heights to original ratio
 #' 
 #' make labels
 #'  > first 9er
@@ -112,6 +108,15 @@ df_niners_plot <- df_niners_tv |>
                                 TRUE ~ lightgrey),
   # add empty space radius to all numbers to leave the centre empty)
          n_niners_plot = n_niners + empty_space_radius_outer)
+
+
+# data for year labels
+df_year_labels <- df_niners_plot |> 
+  
+  # filter for first year entry
+  distinct(Year, .keep_all = T) |> 
+  # select relevant columns
+  select(Year, year_rank_num)
 
 
 # data for dots
@@ -230,6 +235,15 @@ df_rings <- df_niners_plot |>
   # set colour scheme
    scale_colour_identity(guide = "none") +
    scale_fill_identity(guide = "none") +
+   
+  # add outer year labels
+   geom_textpath(data = df_year_labels,
+             aes(x = year_rank_num,
+                 y = empty_space_radius_outer + 4.5,
+                 label = Year),
+             fontface = "bold",
+             # family = "Tempus Sans ITC",
+             show.legend = FALSE) +
    
   # add two inner rectangles which will become the single bull / bulls eye
        # geom_rect(aes(xmin = 0, xmax = length(unique(df_niners_plot$year_rank)) + 1,
