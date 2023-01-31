@@ -26,6 +26,9 @@ pacman::p_load(sf,
 
 # define colours
 
+# File paths
+if(!dir.exists(file.path("data", "geonames"))) dir.create(file.path("data", "geonames"))
+
 # country outlines from Eurostat
 europe_map_df <- read_sf("https://gisco-services.ec.europa.eu/distribution/v2/nuts/geojson/NUTS_RG_01M_2021_3035_LEVL_1.geojson") |> 
   # filter out overseas territories & Cyprus & Turkey
@@ -51,52 +54,55 @@ europe_elev <- elevatr::get_elev_raster(locations = europe_map_df,
 
 # Address book
 addresses <- rbind(
-  c("Achim von Oppen & Christine Wedhorn", "Familie", "Berlin"),
-  c("Alex Dombrowski & Mela Padilla", "Schule, Stuttgart", "Stuttgart"),
-  c("Alina Brand & Julian Wortmann", "Wohnprojekt", "Leipzig"),
-  c("Angela Prendin", "Phd, Aarhus", "Padova"),
-  c("Angelika & Eberhard von Oppen", "Familie", "Stuttgart"),
-  c("Anne Bjorkman", "PhD", "Göteborg"),
-  c("Benjamin Richter", "Familie", "Marburg"),
-  c("Caroline Saam", "Ultimate", "Köln"),
-  c("Dagmar Egelkraut", "PhD", "Bergen"),
-  c("Dominik Jockers", "Ultimate", "Heidelberg"),
-  c("Elena Pearce & Charlie Davison", "PhD, Aarhus", "Aarhus"),
-  c("Elin Lindén", "Auslandssemester, Abisko", "Umeå"),
-  c("Elisabeth Seitz", "Familie", "Köln"),
-  c("Ellen & Chris Sommer", "Ultimate, Tübingen", "Bonn"),
-  c("Elli, Paul & Lukas Fehling", "Ultimate, Tübingen", "Tübingen"),
-  c("Flo Krüger", "Ultimate", "Marburg"),
-  c("Giulia Mazzotti", "Master, Davos", "Grenoble"),
-  c("Hanna Frick", "Studium, Tübingen", "Zürich"),
-  c("Heidi & Hartmut Richter", "Familie", "Neu-Anspach"),
-  c("Ida Dumon", "Ultimate", "Brandenburg"),
-  c("Jakob Assmann & Nina Moffat", "PhD", "Zürich"),
-  c("Jakob de Maeyer", "Ultimate", "Münster"),
-  c("Jakob Dürrwächter", "Schule, Stuttgart", "Berlin"),
-  c("Johannes Domeier", "Auslandssemester, Umeå", "Malmö"),
-  c("Juli Ballmann", "Ultimate", "Berlin"),
-  c("Kathrin Bross & Moritz Koch", "Studium, Tübingen", "Heidelberg"),
-  c("Katja Weigl", "Ultimate", "Freiburg"),
-  c("Keno Franke & Theresa Purschke", "Ultimate", "Berlin"),
-  c("Linnéa Weitkamp", "WG, Tübingen", "Leipzig"),
-  c("Mariana García Criado", "PhD", "Edinburgh"),
-  c("Max Schön & Lisa Emerich", "WG, Tübingen", "Heidelberg"),
-  c("Ollie Baines", "PhD, Aarhus", "Aarhus"),
-  c("Patrick Möhl", "Master, Davos", "Basel"),
-  c("Ragnhild Gya & Lars-Olav Hammer", "PhD", "Bergen"),
-  c("Ronja Wedegärtner", "Studium, Tübingen", "Oslo"),
-  c("Rosa Witty", "Studium, Tübingen", "Tübingen"),
-  c("Rosel von Oppen", "Familie", "Marburg"),
-  c("Sara ten Brinke & Jonas Bothe", "Wohnprojekt", "Alfter"),
-  c("Signe Lemcke", "WG, Aarhus", "Aarhus"),
-  c("Sonja Lorenz", "Musik, Tübingen", "München"),
-  c("Sonja Wipf & Christian Rixen", "Master, Davos", "Davos"),
-  c("Sophie Monsarrat & Adam Custock", "PhD", "Nijmegen"),
-  c("Tofu (Markus) Starr", "Ultimate", "Hamburg"),
-  c("Ulrich Schaffert", "Familie", "Frankfurt"),
-  c("Vera Blaschke & Flo Schunck", "Ultimate", "Leipzig"),
-  c("Vera Middendorf & Behrend Dellwisch", "WG, Tübingen", "Münster")
+  c("Achim von Oppen & Christine Wedhorn", "Familie", "Berlin, DE"),
+  c("Alex Dombrowski & Mela Padilla", "Schule, Stuttgart", "Stuttgart, DE"),
+  c("Alina Brand & Julian Wortmann", "Wohnprojekt", "Leipzig, DE"),
+  c("Angela Prendin", "Phd, Aarhus", "Padova, IT"),
+  c("Angelika & Eberhard von Oppen", "Familie", "Stuttgart, DE"),
+  c("Anne Bjorkman", "PhD", "Göteborg, SE"),
+  c("Benjamin Richter", "Familie", "Marburg, DE"),
+  c("Caroline Saam", "Ultimate", "Köln, DE"),
+  c("Dagmar Egelkraut", "PhD", "Bergen, NO"),
+  c("Dominik Jockers", "Ultimate", "Heidelberg, DE"),
+  c("Elena Pearce & Charlie Davison", "PhD, Aarhus", "Aarhus, DK"),
+  c("Elin Lindén", "Auslandssemester, Abisko", "Umeå, SE"),
+  c("Elisabeth Seitz", "Familie", "Köln, DE"),
+  c("Ellen & Chris Sommer", "Ultimate, Tübingen", "Bonn, DE"),
+  c("Elli, Paul & Lukas Fehling", "Ultimate, Tübingen", "Tübingen, DE"),
+  c("Emily Pickering Pedersen", "Auslandssemester, Abisko", "Abisko, SE"),
+  c("Flo Krüger", "Ultimate", "Marburg, DE"),
+  c("Giulia Mazzotti", "Master, Davos", "Grenoble, FR"),
+  c("Hanna Frick", "Studium, Tübingen", "Zürich, CH"),
+  c("Heidi & Hartmut Richter", "Familie", "Neu-Anspach, DE"),
+  c("Ida Dumon", "Ultimate", "Brandenburg, DE"),
+  c("Jakob Assmann & Nina Moffat", "PhD", "Zürich, DE"),
+  c("Jakob de Maeyer", "Ultimate", "Münster, DE"),
+  c("Jakob Dürrwächter", "Schule, Stuttgart", "Berlin, DE"),
+  c("Johannes Domeier", "Auslandssemester, Umeå", "Malmö, SE"),
+  c("Juli Ballmann", "Ultimate", "Berlin, DE"),
+  c("Kathrin Bross & Moritz Koch", "Studium, Tübingen", "Heidelberg, DE"),
+  c("Katja Weigl", "Ultimate", "Freiburg, DE"),
+  c("Keno Franke & Theresa Purschke", "Ultimate", "Berlin, DE"),
+  c("Linnéa Weitkamp", "WG, Tübingen", "Leipzig, DE"),
+  c("Lisa Andresen", "Auslandssemester, Abisko", "Greifswald"),
+  c("Mariana García Criado", "PhD", "Edinburgh, UK"),
+  c("Max Schön & Lisa Emerich", "WG, Tübingen", "Heidelberg, DE"),
+  c("Muriel Ehrbar & Nick Solenthaler", "Master, Riederfurka", "Winterthur, CH"),
+  c("Ollie Baines", "PhD, Aarhus", "Aarhus, DK"),
+  c("Patrick Möhl", "Master, Davos", "Basel, CH"),
+  c("Ragnhild Gya & Lars-Olav Hammer", "PhD", "Bergen, NO"),
+  c("Ronja Wedegärtner", "Studium, Tübingen", "Oslo, NO"),
+  c("Rosa Witty", "Studium, Tübingen", "Tübingen, DE"),
+  c("Rosel von Oppen", "Familie", "Marburg, DE"),
+  c("Sara ten Brinke & Jonas Bothe", "Wohnprojekt", "Alfter, DE"),
+  c("Signe Lemcke", "WG, Aarhus", "Aarhus, DK"),
+  c("Sonja Lorenz", "Musik, Tübingen", "München, DE"),
+  c("Sonja Wipf & Christian Rixen", "Master, Davos", "Davos, CH"),
+  c("Sophie Monsarrat & Adam Custock", "PhD", "Nijmegen, NL"),
+  c("Tofu (Markus) Starr", "Ultimate", "Hamburg, DE"),
+  c("Ulrich Schaffert", "Familie", "Frankfurt, DE"),
+  c("Vera Blaschke & Flo Schunck", "Ultimate", "Leipzig, DE"),
+  c("Vera Middendorf & Behrend Dellwisch", "WG, Tübingen", "Münster, DE")
 ) |> 
   
   # transform to tibble
@@ -107,10 +113,12 @@ addresses <- rbind(
          connection = 2,
          town = 3)
 
-addresses_locations <- addresses |> 
+addresses_locations <- download.file("http://download.geonames.org/export/dump/cities1000.zip") |> 
+  # unzip into data
+  zip::unzip(exdir = "data/geonames") #|> 
   
   # get coordinates through Geonames
-  left_join(addresses |> 
+  right_join(addresses |> 
               pull(town) |> 
               GNsearch() |> 
               bind_rows(),
