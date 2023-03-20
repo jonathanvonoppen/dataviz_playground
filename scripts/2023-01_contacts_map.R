@@ -94,6 +94,7 @@ addresses <- rbind(
   c("Max Schön & Lisa Emerich", "WG, Tübingen", "Heidelberg, DE"),
   c("Muriel Ehrbar & Nick Solenthaler", "Master, Riederfurka", "Winterthur, CH"),
   c("Nacho Montero Requena", "WG, Aarhus", "Århus, DK"),
+  c("Nina Fahs", "PhD, Aarhus", "Brno, CZ"),
   c("Ollie Baines", "PhD, Aarhus", "Århus, DK"),
   c("Patrick Möhl", "Master, Davos", "Basel, CH"),
   c("Ragnhild Gya & Lars-Olav Hammer", "PhD", "Bergen, NO"),
