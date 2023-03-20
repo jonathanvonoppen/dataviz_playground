@@ -18,6 +18,7 @@ pacman::p_load(sf,
                tidyverse,  # for data wrangling and visualisation
                ggnewscale, # for multiple colour scales in ggplots
                ggthemes,   # for extra themes
+               MetBrewer,  # for nice colour palettes
                polite,     # for polite web scraping
                rvest       # for web scraping functions
 )
@@ -169,8 +170,13 @@ addresses_locations <- read_delim(file = file.path("data", "geonames", "cities10
            extra = "merge", 
            fill = "right") |> 
   
+  # make numeric country col for making colour palette work
+  mutate(country_num = factor(country),
+         country_num = as.numeric(fct_shuffle(country_num))) |> 
+  
   # transform to sf object
-  st_as_sf(coords = c("longitude", "latitude"))
+  st_as_sf(coords = c("longitude", "latitude"),
+           crs = 4326)
 
 
 # Plot map ----
@@ -190,6 +196,12 @@ addresses_locations <- read_delim(file = file.path("data", "geonames", "cities10
            colour = "grey80",
            pch = 22,
            size = 3) +
+   # add points
+   geom_sf(data = addresses_locations,
+           aes(fill = country_num),
+           pch = 21,
+           size = 4,
+           colour = "grey30") +
    # # add labels
    # geom_sf_label(data = maple_loc,
    #               aes(label = loc,
@@ -197,8 +209,8 @@ addresses_locations <- read_delim(file = file.path("data", "geonames", "cities10
    #               nudge_x = 180000,
    #               nudge_y = -120000,
    #               size = 3) +
-   # # adjust colour schemes for points and labels
-   # scale_colour_manual(values = c("darkgreen", "steelblue3", "firebrick4", "goldenrod")) +
+   # adjust colour schemes for points and labels
+   scale_fill_met_c("Austria") +
    # scale_fill_manual(values = c("darkgreen", "steelblue3", "firebrick4", "goldenrod")) +
    # use empty map theme
    theme_map() +
