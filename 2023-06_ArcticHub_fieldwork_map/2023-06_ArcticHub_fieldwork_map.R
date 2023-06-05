@@ -8,9 +8,16 @@ pacman::p_load(readxl,
                sf,
                rnaturalearth,
                ggthemes,
-               plotly)
+               ggforce,
+               ggrepel,
+               plotly,
+               cowplot)
 
 setwd("2023-06_ArcticHub_fieldwork_map")
+
+# Colour schemes
+palette_labs <- c("#e67e22", "#2e86c1", "#cb4335", "#27ae60", "#f1c40f", "#884ea0")
+# palette_names <- 
 
 # 1) Prepare data ----
 
@@ -21,7 +28,7 @@ zoom_to <- c(-52, 78)
 
 # define target CRS
 target_crs <- "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-52 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
-target_crs <- "+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +type=crs" # Arctic Polar Stereographic
+
 # define zoom level and ranges
 zoom_level <- 2.1
 
@@ -94,8 +101,13 @@ coords_add <- fieldwork_map_data %>%
     # Ymer Island / Ella Island
     c(place = "Ymer Island / Ella Island", lat = 72.979719, lon = -24.861646)),
     by = "place") %>%
-  mutate(lat = as.numeric(lat),
-         lon = as.numeric(lon))
+  mutate(
+    # make coordinates numeric
+    lat = as.numeric(lat),
+    lon = as.numeric(lon),
+    # adjust Ymer/Ella label
+    place = case_when(place == "Ymer Island / Ella Island" ~ "Ymer Island /\nElla Island",
+                      TRUE ~ place))
 
 # merge data frames & make spatial
 fieldwork_map_data <- fieldwork_map_data %>% 
@@ -108,8 +120,38 @@ fieldwork_map_data <- fieldwork_map_data %>%
   sf::st_as_sf(coords = c("lon", "lat"),
                crs = "epsg:4326") %>%
   
+  # jitter points with multiple occurrences
+    # make place_region var to account for close-by locations (Abisko/Latnja, Ilulissat/Qeqertarsuaq)
+  mutate(place_region = case_when(place %in% c("Abisko", "Latnjajaure") ~ "Sapmi",
+                                  place %in% c("Ilulissat", "Qeqertarsuaq") ~ "Disko Bay",
+                                  TRUE ~ place)) %>%
+  group_by(place_region) %>%
+  group_split() %>%
+  map_if(~ nrow(.x) > 1,
+         ~ st_jitter(.x, amount = 3)) %>%
+  bind_rows() %>%
+  
+              # # restore lat/lon columns
+              # mutate(lon = sf::st_coordinates(.)[,1],
+              #        lat = sf::st_coordinates(.)[,2]) %>%
+              # st_drop_geometry() # %>%
+  
   # transform coordinates to polar stereographic
   st_transform(target_crs)
+
+# make convex hull
+map_hull_data <- fieldwork_map_data %>% st_buffer(2e5) %>%
+  
+  # Aggregate - which unions the points into MULTIPOINTS (default do_union=TRUE)
+  # and uses FUN to assign the first value in other fields
+    # source: https://gis.stackexchange.com/a/404071
+  aggregate(.,
+      by=list(lab=.$lab),
+      FUN=function(vals){vals[1]}) %>% 
+  st_sf()
+
+# Cast to convex hull
+st_geometry(map_hull_data) <- st_convex_hull(map_hull_data$geometry)
 
 
 # >> map data ----
@@ -127,33 +169,128 @@ background_map <- rnaturalearth::ne_countries(scale = "large",
 
 
 # 2) Make map ----
-fieldwork_map <- ggplot() +
-  geom_sf(data = background_map,
-          colour = "white") +
-  geom_sf(data = fieldwork_map_data,
-          aes(colour = lab,
-              fill = name),
-          pch = 21,
-          size = 4,
-          stroke = 2) +
-  # no legend
-  guides(fill = "none",
-         colour = "none") +
-  # set extent
-  coord_sf(xlim = st_coordinates(disp_window)[,'X'],
-           ylim = st_coordinates(disp_window)[,'Y'],
-           crs = target_crs) +
-  # plain map theme with decent grid
-  theme_map() +
-  theme(panel.grid.major = element_line(colour = "grey90"))
 
-  # make interactive
+# >> map ----
+(fieldwork_map <- ggplot() +
+   geom_sf(data = background_map,
+           colour = "white",
+           inherit.aes = FALSE) +
+   geom_sf(data = fieldwork_map_data,
+           aes(colour = lab),
+              fill = "grey30",
+              pch = 21,
+              size = 4,
+              stroke = 2,
+              alpha = .6) +
+   # no legend
+   guides(fill = "none",
+          colour = "none") +
+   # colour schemes
+   scale_colour_manual(values = palette_labs) +
+   # set extent
+   coord_sf(xlim = st_coordinates(disp_window)[,'X'],
+            ylim = st_coordinates(disp_window)[,'Y'],
+            crs = target_crs) +
+   # plain map theme with decent grid
+   theme_map() +
+   theme(panel.grid.major = element_line(colour = "grey90")))
+
+
+# make dummy plot for legend
+map_legend_labels <- fieldwork_map_data %>% arrange(lab) %>% distinct(lab) %>% pull(lab) %>% str_replace("\\/ ", "\\/\n")
+map_legend <- get_legend(
+  ggplot(fieldwork_map_data) +
+    geom_sf(aes(colour = lab,
+                fill = lab),
+            pch = 21,
+            alpha = 0.5) +
+    scale_colour_manual(values = palette_labs,
+                        labels = map_legend_labels,
+                        guide = guide_legend(direction = "horizontal", 
+                                             nrow = 1,
+                                             override.aes = list(stroke = 2))) +
+    scale_fill_manual(values = palette_labs,
+                      labels = map_legend_labels,
+                      guide = guide_legend(direction = "horizontal", 
+                                           nrow = 1,
+                                           override.aes = list(size = 5))) +
+    theme(legend.key = element_blank(),
+          legend.title = element_blank(),
+          legend.position = "bottom",
+          legend.text = element_text(face = "bold")))
+
+
+# >> add place labels ----
+fieldwork_map_place_labels <- fieldwork_map +
+  
+  # add labels
+  ggrepel::geom_label_repel(data = fieldwork_map_data %>% distinct(place, .keep_all = T),
+                            aes(label = place,
+                                geometry = geometry),
+                            stat = "sf_coordinates",
+                            min.segment.length = 2,
+                            max.overlaps = 10)
+
+
+# >> add name labels ----
+fieldwork_map_name_labels <- fieldwork_map +
+  
+  # add labels
+  ggrepel::geom_label_repel(data = fieldwork_map_data %>% distinct(name, .keep_all = T),
+                            aes(label = name,
+                                geometry = geometry),
+                            stat = "sf_coordinates",
+                            min.segment.length = 2,
+                            max.overlaps = 10)
+
+
+# >> add lab hulls and labels ----
+(fieldwork_map_lab_labels <- ggplot() +
+   # add background map
+   geom_sf(data = background_map,
+           colour = "white",
+           inherit.aes = FALSE) +
+  # add hulls
+  geom_sf(data = map_hull_data,
+          aes(colour = lab,
+              fill = lab),
+          alpha = .4) +
+   # add labels
+   ggrepel::geom_label_repel(data = map_hull_data %>% distinct(lab, .keep_all = T),
+                             aes(label = lab,
+                                 geometry = geometry),
+                             stat = "sf_coordinates",
+                             min.segment.length = 2,
+                             max.overlaps = 10) +
+   # add points
+   geom_sf(data = fieldwork_map_data,
+           aes(colour = lab),
+           fill = "grey30",
+           pch = 21,
+           size = 4,
+           stroke = 2,
+           alpha = .6) +
+   # no legend
+   guides(fill = "none",
+          colour = "none") +
+   # colour schemes
+   scale_colour_manual(values = palette_labs) +
+   scale_fill_manual(values = palette_labs) +
+   # set extent
+   coord_sf(xlim = st_coordinates(disp_window)[,'X'],
+            ylim = st_coordinates(disp_window)[,'Y'],
+            crs = target_crs) +
+   # plain map theme with decent grid
+   theme_map() +
+   theme(panel.grid.major = element_line(colour = "grey90")))
+
+
+# >> make interactive ----
 ggplotly(fieldwork_map)
 
 
 #' ideas:
 #' - avoid overlapping points 
 #'    ~ add path to exact location
-#' - add labels for people (ggrepel::geom_label_repel(stat = "sf_coordinates))
 #' - add hulls & labels for labs (ggforce::geom_mark_hull)
 #' 
