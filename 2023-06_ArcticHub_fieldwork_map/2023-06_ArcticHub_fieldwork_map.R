@@ -42,8 +42,8 @@ zoom_to_xy <- st_sfc(st_point(zoom_to), crs = 4326) %>%
 
 # calculate lon and lat ranges for display window by subtracting/adding the half of the above ranges from/to the zoom center coordinates respectively.
 disp_window <- st_sfc(
-  st_point(st_coordinates(zoom_to_xy - c(x_span / 2, y_span / 2))),
-  st_point(st_coordinates(zoom_to_xy + c(x_span / 2, y_span / 2))),
+  st_point(st_coordinates(zoom_to_xy - c(x_span / 2, y_span / 4))),
+  st_point(st_coordinates(zoom_to_xy + c(x_span / 2, y_span / 4))),
   crs = target_crs)
 
 
@@ -122,19 +122,22 @@ fieldwork_map_data <- fieldwork_map_data %>%
   
   # jitter points with multiple occurrences
     # make place_region var to account for close-by locations (Abisko/Latnja, Ilulissat/Qeqertarsuaq)
-  mutate(place_region = case_when(place %in% c("Abisko", "Latnjajaure") ~ "Sapmi",
-                                  place %in% c("Ilulissat", "Qeqertarsuaq") ~ "Disko Bay",
-                                  TRUE ~ place)) %>%
+    mutate(place_region = case_when(place %in% c("Abisko", "Latnjajaure") ~ "Sapmi",
+                                    place %in% c("Ilulissat", "Qeqertarsuaq") ~ "Disko Bay",
+                                    TRUE ~ place)) %>%
   group_by(place_region) %>%
   group_split() %>%
   map_if(~ nrow(.x) > 1,
          ~ st_jitter(.x, amount = 3)) %>%
   bind_rows() %>%
   
-              # # restore lat/lon columns
-              # mutate(lon = sf::st_coordinates(.)[,1],
-              #        lat = sf::st_coordinates(.)[,2]) %>%
-              # st_drop_geometry() # %>%
+  # make label column for interactive plots
+  mutate(label = case_when(!is.na(date_range) ~ paste(name, place, date_range, method,
+                                                      sep = " -- "),
+                           is.na(method) ~ paste(name, place,
+                                                 sep = " -- "),
+                           TRUE ~ paste(name, place, method,
+                                        sep = " -- "))) %>%
   
   # transform coordinates to polar stereographic
   st_transform(target_crs)
@@ -176,17 +179,18 @@ background_map <- rnaturalearth::ne_countries(scale = "large",
            colour = "white",
            inherit.aes = FALSE) +
    geom_sf(data = fieldwork_map_data,
-           aes(colour = lab),
-              fill = "grey30",
-              pch = 21,
-              size = 4,
-              stroke = 2,
-              alpha = .6) +
+           aes(fill = label,
+               colour = lab),
+           pch = 21,
+           size = 4,
+           stroke = 2,
+           alpha = .6) +
    # no legend
    guides(fill = "none",
           colour = "none") +
    # colour schemes
    scale_colour_manual(values = palette_labs) +
+   scale_fill_manual(values = rep("grey30", length(fieldwork_map_data$name))) +
    # set extent
    coord_sf(xlim = st_coordinates(disp_window)[,'X'],
             ylim = st_coordinates(disp_window)[,'Y'],
@@ -220,6 +224,13 @@ map_legend <- get_legend(
           legend.text = element_text(face = "bold")))
 
 
+# combine base map and legend
+fieldwork_map_legend <- plot_grid(plotlist = list(fieldwork_map,
+                                                  map_legend),
+                                  ncol = 1,
+                                  rel_heights = c(1, .15))
+
+
 # >> add place labels ----
 fieldwork_map_place_labels <- fieldwork_map +
   
@@ -230,6 +241,13 @@ fieldwork_map_place_labels <- fieldwork_map +
                             stat = "sf_coordinates",
                             min.segment.length = 2,
                             max.overlaps = 10)
+
+
+# combine name map and legend
+fieldwork_map_places_legend <- plot_grid(plotlist = list(fieldwork_map_place_labels,
+                                                         map_legend),
+                                         ncol = 1,
+                                         rel_heights = c(1, .15))
 
 
 # >> add name labels ----
@@ -244,6 +262,13 @@ fieldwork_map_name_labels <- fieldwork_map +
                             max.overlaps = 10)
 
 
+# combine name map and legend
+fieldwork_map_names_legend <- plot_grid(plotlist = list(fieldwork_map_name_labels,
+                                                         map_legend),
+                                         ncol = 1,
+                                         rel_heights = c(1, .15))
+
+
 # >> add lab hulls and labels ----
 (fieldwork_map_lab_labels <- ggplot() +
    # add background map
@@ -255,13 +280,6 @@ fieldwork_map_name_labels <- fieldwork_map +
           aes(colour = lab,
               fill = lab),
           alpha = .4) +
-   # add labels
-   ggrepel::geom_label_repel(data = map_hull_data %>% distinct(lab, .keep_all = T),
-                             aes(label = lab,
-                                 geometry = geometry),
-                             stat = "sf_coordinates",
-                             min.segment.length = 2,
-                             max.overlaps = 10) +
    # add points
    geom_sf(data = fieldwork_map_data,
            aes(colour = lab),
@@ -270,6 +288,13 @@ fieldwork_map_name_labels <- fieldwork_map +
            size = 4,
            stroke = 2,
            alpha = .6) +
+   # add labels
+   ggrepel::geom_label_repel(data = map_hull_data %>% distinct(lab, .keep_all = T),
+                             aes(label = lab,
+                                 geometry = geometry),
+                             stat = "sf_coordinates",
+                             min.segment.length = 2,
+                             max.overlaps = 10) +
    # no legend
    guides(fill = "none",
           colour = "none") +
@@ -285,12 +310,17 @@ fieldwork_map_name_labels <- fieldwork_map +
    theme(panel.grid.major = element_line(colour = "grey90")))
 
 
+# combine lab map and legend
+fieldwork_map_labs_legend <- plot_grid(plotlist = list(fieldwork_map_lab_labels,
+                                                       map_legend),
+                                       ncol = 1,
+                                       rel_heights = c(1, .15))
+
+
 # >> make interactive ----
-ggplotly(fieldwork_map)
+ggplotly(fieldwork_map,
+         tooltip = c("name", "place", "date_range", "method")) # not working yet, neither displaying "label" col
 
 
 #' ideas:
-#' - avoid overlapping points 
-#'    ~ add path to exact location
-#' - add hulls & labels for labs (ggforce::geom_mark_hull)
-#' 
+#' - make markdown with all maps displayed
