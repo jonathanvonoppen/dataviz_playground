@@ -318,8 +318,8 @@ fieldwork_map_labs_legend <- plot_grid(plotlist = list(fieldwork_map_lab_labels,
 
 
 # >> make interactive ----
-ggplotly(fieldwork_map,
-         tooltip = c("name", "place", "date_range", "method")) # not working yet, neither displaying "label" col
+fieldwork_map_plotly <- ggplotly(fieldwork_map,
+                                 tooltip = c("name", "place", "date_range", "method")) # not working yet, neither displaying "label" col
 
 
 #' ideas:
