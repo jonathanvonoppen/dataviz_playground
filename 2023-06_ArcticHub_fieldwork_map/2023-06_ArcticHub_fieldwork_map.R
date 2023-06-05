@@ -7,7 +7,8 @@ pacman::p_load(readxl,
                tidyverse,
                sf,
                rnaturalearth,
-               ggthemes)
+               ggthemes,
+               plotly)
 
 setwd("2023-06_ArcticHub_fieldwork_map")
 
@@ -20,7 +21,7 @@ zoom_to <- c(-52, 78)
 
 # define target CRS
 target_crs <- "+proj=stere +lat_0=90 +lat_ts=90 +lon_0=-52 +k=0.994 +x_0=2000000 +y_0=2000000 +datum=WGS84 +units=m +no_defs"
-
+target_crs <- "+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +type=crs" # Arctic Polar Stereographic
 # define zoom level and ranges
 zoom_level <- 2.1
 
@@ -44,7 +45,7 @@ fieldwork_plans <- readxl::read_xlsx("ArcticHub_2023_fieldwork_map_data.xlsx") %
   
   # drop unused cols & rows
   select(-contact) %>%
-  filter(!name == "Laura")
+  filter(!is.na(place))
 
 # place names & coordinates
 coords <- read_delim(file.path("..", "data", "geonames", "cities1000.txt"), 
@@ -104,7 +105,7 @@ fieldwork_map_data <- fieldwork_map_data %>%
   bind_rows(coords_add) %>%
   
   # make sf object
-  sf::st_as_sf(coords = c("lat", "lon"),
+  sf::st_as_sf(coords = c("lon", "lat"),
                crs = "epsg:4326") %>%
   
   # transform coordinates to polar stereographic
@@ -121,20 +122,23 @@ background_map <- rnaturalearth::ne_countries(scale = "large",
   # filter for relevant countries
   filter(continent %in% c("Asia", "Europe", "North America")) %>%
   
-  # transform coordinates to polar stereographic, https://epsg.io/5938
+  # transform coordinates to Greenland polar stereographic, https://epsg.io/5938
   st_transform(target_crs)
 
 
 # 2) Make map ----
-ggplot() +
-  geom_sf(data = background_map) +
+fieldwork_map <- ggplot() +
+  geom_sf(data = background_map,
+          colour = "white") +
   geom_sf(data = fieldwork_map_data,
           aes(colour = lab,
               fill = name),
           pch = 21,
-          size = 4) +
+          size = 4,
+          stroke = 2) +
   # no legend
-  guides(fill = "none") +
+  guides(fill = "none",
+         colour = "none") +
   # set extent
   coord_sf(xlim = st_coordinates(disp_window)[,'X'],
            ylim = st_coordinates(disp_window)[,'Y'],
@@ -143,5 +147,13 @@ ggplot() +
   theme_map() +
   theme(panel.grid.major = element_line(colour = "grey90"))
 
-  # limit coordinates: check BES datavis workshop
-  # make interactive: ggplotly
+  # make interactive
+ggplotly(fieldwork_map)
+
+
+#' ideas:
+#' - avoid overlapping points 
+#'    ~ add path to exact location
+#' - add labels for people (ggrepel::geom_label_repel(stat = "sf_coordinates))
+#' - add hulls & labels for labs (ggforce::geom_mark_hull)
+#' 
