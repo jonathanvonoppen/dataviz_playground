@@ -13,7 +13,8 @@ pacman::p_load(readxl,
                plotly,
                cowplot)
 
-setwd("2023-06_ArcticHub_fieldwork_map")
+if(getwd() == "C:/Users/au630524/Documents/R/dataviz_playground")
+  setwd("2023-06_ArcticHub_fieldwork_map")
 
 # Colour schemes
 palette_labs <- c("#e67e22", "#2e86c1", "#cb4335", "#27ae60", "#f1c40f", "#884ea0")
@@ -211,16 +212,18 @@ map_legend <- get_legend(
     scale_colour_manual(values = palette_labs,
                         labels = map_legend_labels,
                         guide = guide_legend(direction = "horizontal", 
-                                             nrow = 1,
+                                             byrow = T,
+                                             nrow = 2,
                                              override.aes = list(stroke = 2))) +
     scale_fill_manual(values = palette_labs,
                       labels = map_legend_labels,
                       guide = guide_legend(direction = "horizontal", 
-                                           nrow = 1,
+                                           nrow = 2,
                                            override.aes = list(size = 5))) +
     theme(legend.key = element_blank(),
           legend.title = element_blank(),
           legend.position = "bottom",
+          legend.spacing.y = unit(3, "mm"),
           legend.text = element_text(face = "bold")))
 
 
@@ -228,7 +231,8 @@ map_legend <- get_legend(
 fieldwork_map_legend <- plot_grid(plotlist = list(fieldwork_map,
                                                   map_legend),
                                   ncol = 1,
-                                  rel_heights = c(1, .15))
+                                  rel_heights = c(1, .18),
+                                  rel_widths = c(1, 0.6))
 
 
 # >> add place labels ----
@@ -247,7 +251,8 @@ fieldwork_map_place_labels <- fieldwork_map +
 fieldwork_map_places_legend <- plot_grid(plotlist = list(fieldwork_map_place_labels,
                                                          map_legend),
                                          ncol = 1,
-                                         rel_heights = c(1, .15))
+                                         rel_heights = c(1, .18),
+                                         rel_widths = c(1, 0.6))
 
 
 # >> add name labels ----
@@ -266,7 +271,8 @@ fieldwork_map_name_labels <- fieldwork_map +
 fieldwork_map_names_legend <- plot_grid(plotlist = list(fieldwork_map_name_labels,
                                                          map_legend),
                                          ncol = 1,
-                                         rel_heights = c(1, .15))
+                                         rel_heights = c(1, .18),
+                                        rel_widths = c(1, 0.6))
 
 
 # >> add lab hulls and labels ----
@@ -314,7 +320,8 @@ fieldwork_map_names_legend <- plot_grid(plotlist = list(fieldwork_map_name_label
 fieldwork_map_labs_legend <- plot_grid(plotlist = list(fieldwork_map_lab_labels,
                                                        map_legend),
                                        ncol = 1,
-                                       rel_heights = c(1, .15))
+                                       rel_heights = c(1, .18),
+                                       rel_widths = c(1, 0.4))
 
 
 # >> make interactive ----
