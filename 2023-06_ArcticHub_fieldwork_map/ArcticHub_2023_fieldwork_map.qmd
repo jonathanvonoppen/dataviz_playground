@@ -57,14 +57,14 @@ fieldwork_map_labs_legend
 
 Impressive spread in Team Shrub and the EDGE lab! Better keep track of each other's time difference when communicating (:
 
-To wrap it up, just for fun, here's the same plot again, though this time in an interactive format:
+<!-- To wrap it up, just for fun, here's the same plot again, though this time in an interactive format: -->
 
-```{r plotly}
-#| echo: FALSE
-#| warning: FALSE
-#| column: page
-#| out-width: 100%
-fieldwork_map_plotly
-```
+<!-- ```{r plotly} -->
+<!-- #| echo: FALSE -->
+<!-- #| warning: FALSE -->
+<!-- #| column: page -->
+<!-- #| out-width: 100% -->
+<!-- fieldwork_map_plotly -->
+<!-- ``` -->
 
 **Safe travels everyone, stay safe and good luck getting all that exciting data in!**
