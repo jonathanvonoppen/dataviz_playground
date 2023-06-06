@@ -9,7 +9,7 @@ format:
       gutter-width: 1.5rem
 project:
   type: website
-  output-dir: "2023-06_ArcticHub_fieldwork_map"
+  output-dir: docs
 editor: visual
 ---
 
