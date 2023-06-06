@@ -1,6 +1,15 @@
 ---
 title: "ArcticHub summer season"
-format: html
+format:
+  html: 
+    grid:
+      sidebar-width: 200px
+      body-width: 800px
+      margin-width: 200px
+      gutter-width: 1.5rem
+project:
+  type: website
+  output-dir: "2023-06_ArcticHub_fieldwork_map"
 editor: visual
 ---
 
@@ -8,51 +17,53 @@ Summer is here -- at least in Aarhus :) -- and the field season is about to take
 
 I've hidden all the code in a separate script (`2023-06_ArcticHub_fieldwork_map.R`), but you are of course welcome to have a peek and recycle it as it's useful!
 
-```{r setup, include = FALSE}
+```{r setup, echo = FALSE, warning = FALSE, include = FALSE}
 source("2023-06_ArcticHub_fieldwork_map.R")
 ```
 
 So where are we all heading?
 
-```{r}
+```{r places}
+#| echo: FALSE
+#| warning: FALSE
+#| column: page
+#| out-width: 100%
 fieldwork_map_places_legend
 ```
 
-That's a pretty nice longitudinal spread we will have between us, from 
-`r paste(coords_add |> slice_max(lat, n = 1) |> pull(lat) |> round(digits = 1)) |> abs()`
-°N (
-`r paste(coords_add |> slice_max(lat, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ") |> pull(place_name))`
-) to 
-`r paste(coords_add |> slice_min(lat, n = 1) |> pull(lat) |> round(digits = 1)) |> abs()`
-°S (
-`r paste(coords_add |> slice_min(lat, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ") |> pull(place_name))`
-) and from 
-`r paste(coords_add |> slice_min(lon, n = 1) |> pull(lon) |> round(digits = 1)) |> abs()`
-°W (
-`r paste(coords_add |> slice_min(lon, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ") |> pull(place_name))`
-) to 
-`r paste(coords_add |> slice_max(lon, n = 1) |> pull(lon) |> round(digits = 1)) |> abs()`
-°E (
-`r paste(coords_add |> slice_min(lon, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ") |> pull(place_name))`
-). And things will get pretty crowded on the Greenlandic West coast.
+That's a pretty nice longitudinal spread we will have between us, from `r paste(coords_add |> slice_max(lat, n = 1) |> pull(lat) |> round(digits = 1) |> abs())` °N ( `r paste(coords_add |> slice_max(lat, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ")) |> pull(place_name))` ) to `r paste(coords |> slice_min(lat, n = 1) |> pull(lat) |> round(digits = 1) |> abs())` °S ( `r paste(coords_add |> slice_min(lat, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ")) |> pull(place_name))` ) and from `r paste(coords_add |> slice_min(lon, n = 1) |> pull(lon) |> round(digits = 1) |> abs())` °W ( `r paste(coords_add |> slice_min(lon, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ")) |> pull(place_name))` ) to `r paste(coords_add |> slice_max(lon, n = 1) |> pull(lon) |> round(digits = 1) |> abs())` °E ( `r paste(coords_add |> slice_max(lon, n = 1) |> mutate(name = name |> str_replace(", ", " and "), place_name = paste(place, name, sep = ", ")) |> pull(place_name))` ). And things will get pretty crowded on the Greenlandic West coast.
 
-Curious where individual people will go? 
+Curious where individual people will go?
 
-```{r}
+```{r names}
+#| echo: FALSE
+#| warning: FALSE
+#| column: page
+#| out-width: 100%
 fieldwork_map_names_legend
 ```
 
 Jeff wins the prize for northernmost spot (obviously, looking for the *northernmost plant*), and him, Isla and Madi, Wilhelm and Naia and Maj will all have a lot of travelling to do with at least 3 stops on their summer journeys.
 
 And how will individual groups' members be spread out?
-```{r}
+
+```{r labs}
+#| echo: FALSE
+#| warning: FALSE
+#| column: page
+#| out-width: 100%
 fieldwork_map_labs_legend
 ```
 
 Impressive spread in Team Shrub and the EDGE lab! Better keep track of each other's time difference when communicating (:
 
 To wrap it up, just for fun, here's the same plot again, though this time in an interactive format:
-```{r}
+
+```{r plotly}
+#| echo: FALSE
+#| warning: FALSE
+#| column: page
+#| out-width: 100%
 fieldwork_map_plotly
 ```
 
